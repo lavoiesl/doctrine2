@@ -339,14 +339,14 @@ abstract class AbstractClassMetadataExporterTest extends \Doctrine\Tests\OrmTest
 
             $this->assertEquals('cascade-all', $nodes[0]->getName());
         } elseif ($type == 'yaml') {
-            
+
             $yaml = new \Symfony\Component\Yaml\Parser();
             $value = $yaml->parse(file_get_contents(__DIR__ . '/export/'.$type.'/Doctrine.Tests.ORM.Tools.Export.ExportedUser.dcm.yml'));
-            
+
             $this->assertTrue(isset($value['Doctrine\Tests\ORM\Tools\Export\ExportedUser']['oneToMany']['interests']['cascade']));
             $this->assertEquals(1, count($value['Doctrine\Tests\ORM\Tools\Export\ExportedUser']['oneToMany']['interests']['cascade']));
             $this->assertEquals('all', $value['Doctrine\Tests\ORM\Tools\Export\ExportedUser']['oneToMany']['interests']['cascade'][0]);
-           
+
         } else {
             $this->markTestSkipped('Test aviable only for '.$type.' dirver');
         }
@@ -368,4 +368,17 @@ abstract class AbstractClassMetadataExporterTest extends \Doctrine\Tests\OrmTest
             return rmdir($path);
         }
     }
+}
+
+class Address
+{
+
+}
+class Phonenumber
+{
+
+}
+class Group
+{
+    
 }

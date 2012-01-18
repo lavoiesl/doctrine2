@@ -25,7 +25,9 @@ use Doctrine\Common\Cache\Cache,
     Doctrine\Common\Annotations\AnnotationReader,
     Doctrine\Common\Annotations\SimpleAnnotationReader,
     Doctrine\ORM\Mapping\Driver\Driver,
-    Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+    Doctrine\ORM\Mapping\Driver\AnnotationDriver,
+    Doctrine\ORM\Mapping\NamingStrategy,
+    Doctrine\ORM\Mapping\DefaultNamingStrategy;
 
 /**
  * Configuration container for all configuration options of Doctrine.
@@ -496,17 +498,42 @@ class Configuration extends \Doctrine\DBAL\Configuration
         }
         return $this->_attributes['classMetadataFactoryName'];
     }
-    
+
+    /**
+     * Add a filter to the list of possible filters.
+     *
+     * @param string $name The name of the filter.
+     * @param string $className The class name of the filter.
+     */
+    public function addFilter($name, $className)
+    {
+        $this->_attributes['filters'][$name] = $className;
+    }
+
+    /**
+     * Gets the class name for a given filter name.
+     *
+     * @param string $name The name of the filter.
+     *
+     * @return string The class name of the filter, or null of it is not
+     *  defined.
+     */
+    public function getFilterClassName($name)
+    {
+        return isset($this->_attributes['filters'][$name]) ?
+                $this->_attributes['filters'][$name] : null;
+    }
+
     /**
      * Set default repository class.
-     * 
+     *
      * @since 2.2
      * @param string $className
-     * @throws ORMException If not is a Doctrine\ORM\EntityRepository
+     * @throws ORMException If not is a \Doctrine\ORM\EntityRepository
      */
     public function setDefaultRepositoryClassName($className)
     {
-        if ($className != "Doctrine\ORM\EntityRepository" && 
+        if ($className != "Doctrine\ORM\EntityRepository" &&
            !is_subclass_of($className, 'Doctrine\ORM\EntityRepository')){
             throw ORMException::invalidEntityRepository($className);
         }
@@ -515,7 +542,7 @@ class Configuration extends \Doctrine\DBAL\Configuration
 
     /**
      * Get default repository class.
-     * 
+     *
      * @since 2.2
      * @return string
      */
@@ -523,5 +550,30 @@ class Configuration extends \Doctrine\DBAL\Configuration
     {
         return isset($this->_attributes['defaultRepositoryClassName']) ?
                 $this->_attributes['defaultRepositoryClassName'] : 'Doctrine\ORM\EntityRepository';
+    }
+
+    /**
+     * Set naming strategy.
+     *
+     * @since 2.3
+     * @param NamingStrategy $namingStrategy
+     */
+    public function setNamingStrategy(NamingStrategy $namingStrategy)
+    {
+        $this->_attributes['namingStrategy'] = $namingStrategy;
+    }
+
+    /**
+     * Get naming strategy..
+     *
+     * @since 2.3
+     * @return NamingStrategy
+     */
+    public function getNamingStrategy()
+    {
+        if (!isset($this->_attributes['namingStrategy'])) {
+            $this->_attributes['namingStrategy'] = new DefaultNamingStrategy();
+        }
+        return $this->_attributes['namingStrategy'];
     }
 }

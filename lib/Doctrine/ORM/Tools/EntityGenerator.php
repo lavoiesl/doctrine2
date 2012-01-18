@@ -191,12 +191,14 @@ public function <methodName>()
 
         if ( ! $this->_isNew) {
             $this->_parseTokensInEntityFile(file_get_contents($path));
+        } else {
+            $this->_staticReflection[$metadata->name] = array('properties' => array(), 'methods' => array());
         }
 
         if ($this->_backupExisting && file_exists($path)) {
             $backupPath = dirname($path) . DIRECTORY_SEPARATOR . basename($path) . "~";
             if (!copy($path, $backupPath)) {
-                throw new \RuntimeException("Attempt to backup overwritten entitiy file but copy operation failed.");
+                throw new \RuntimeException("Attempt to backup overwritten entity file but copy operation failed.");
             }
         }
 
@@ -404,11 +406,11 @@ public function <methodName>()
                 $collections[] = '$this->'.$mapping['fieldName'].' = new \Doctrine\Common\Collections\ArrayCollection();';
             }
         }
-        
+
         if ($collections) {
             return $this->_prefixCodeWithSpaces(str_replace("<collections>", implode("\n".$this->_spaces, $collections), self::$_constructorMethodTemplate));
         }
-        
+
         return '';
     }
 
@@ -576,7 +578,7 @@ public function <methodName>()
         if (isset($metadata->table['schema'])) {
             $table[] = 'schema="' . $metadata->table['schema'] . '"';
         }
-        
+
         if (isset($metadata->table['name'])) {
             $table[] = 'name="' . $metadata->table['name'] . '"';
         }
@@ -754,7 +756,7 @@ public function <methodName>()
           '<variableName>'      => Inflector::camelize($fieldName),
           '<methodName>'        => $methodName,
           '<fieldName>'         => $fieldName,
-          '<variableDefault>'   => ($defaultValue !== null ) ? ('='.$defaultValue) : '',
+          '<variableDefault>'   => ($defaultValue !== null ) ? (' = '.$defaultValue) : '',
           '<entity>'            => $this->_getClassName($metadata)
         );
 

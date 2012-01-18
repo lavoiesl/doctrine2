@@ -13,7 +13,7 @@ abstract class OrmTestCase extends DoctrineTestCase
 {
     /** The metadata cache that is shared between all ORM tests (except functional tests). */
     private static $_metadataCacheImpl = null;
-    
+
     /** The query cache that is shared between all ORM tests (except functional tests). */
     private static $_queryCacheImpl = null;
 
@@ -67,18 +67,18 @@ abstract class OrmTestCase extends DoctrineTestCase
      */
     protected function _getTestEntityManager($conn = null, $conf = null, $eventManager = null, $withSharedMetadata = true)
     {
-        $metadataCache = $withSharedMetadata 
-            ? self::getSharedMetadataCacheImpl() 
+        $metadataCache = $withSharedMetadata
+            ? self::getSharedMetadataCacheImpl()
             : new \Doctrine\Common\Cache\ArrayCache;
-        
+
         $config = new \Doctrine\ORM\Configuration();
-        
+
         $config->setMetadataCacheImpl($metadataCache);
         $config->setMetadataDriverImpl($config->newDefaultAnnotationDriver());
         $config->setQueryCacheImpl(self::getSharedQueryCacheImpl());
         $config->setProxyDir(__DIR__ . '/Proxies');
         $config->setProxyNamespace('Doctrine\Tests\Proxies');
-        
+
         if ($conn === null) {
             $conn = array(
                 'driverClass'  => 'Doctrine\Tests\Mocks\DriverMock',
@@ -87,11 +87,11 @@ abstract class OrmTestCase extends DoctrineTestCase
                 'password'     => 'wayne'
             );
         }
-        
+
         if (is_array($conn)) {
             $conn = \Doctrine\DBAL\DriverManager::getConnection($conn, $config, $eventManager);
         }
-        
+
         return \Doctrine\Tests\Mocks\EntityManagerMock::create($conn, $config, $eventManager);
     }
 
@@ -100,7 +100,7 @@ abstract class OrmTestCase extends DoctrineTestCase
         if (self::$_metadataCacheImpl === null) {
             self::$_metadataCacheImpl = new \Doctrine\Common\Cache\ArrayCache;
         }
-        
+
         return self::$_metadataCacheImpl;
     }
 
@@ -109,7 +109,7 @@ abstract class OrmTestCase extends DoctrineTestCase
         if (self::$_queryCacheImpl === null) {
             self::$_queryCacheImpl = new \Doctrine\Common\Cache\ArrayCache;
         }
-        
+
         return self::$_queryCacheImpl;
     }
 }

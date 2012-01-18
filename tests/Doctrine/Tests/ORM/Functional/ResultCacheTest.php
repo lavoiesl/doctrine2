@@ -19,7 +19,7 @@ class ResultCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
      * @var \ReflectionProperty
      */
     private $cacheDataReflection;
-    
+
     protected function setUp() {
         if (version_compare(\Doctrine\Common\Version::VERSION, '2.2.0-DEV', '>=')) {
             $this->markTestSkipped('Test not compatible with 2.2 common');
@@ -28,7 +28,7 @@ class ResultCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->useModelSet('cms');
         parent::setUp();
     }
-    
+
     /**
      * @param   ArrayCache $cache
      * @return  integer
@@ -143,7 +143,7 @@ class ResultCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $cache = new ArrayCache();
         $query->setResultCacheDriver($cache)->useResultCache(true);
 
-        $this->assertEquals(0, count($cache->getIds()));
+        $this->assertEquals(0, $this->getCacheSize($cache));
         $query->getResult();
         $this->assertEquals(1, $this->getCacheSize($cache));
 

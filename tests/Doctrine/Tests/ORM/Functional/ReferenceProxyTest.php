@@ -148,4 +148,75 @@ class ReferenceProxyTest extends \Doctrine\Tests\OrmFunctionalTestCase
 
         $this->assertTrue($entity->wakeUp, "Loading the proxy should call __wakeup().");
     }
+
+    public function testDoNotInitializeProxyOnGettingTheIdentifier()
+    {
+        $id = $this->createProduct();
+
+        /* @var $entity Doctrine\Tests\Models\ECommerce\ECommerceProduct */
+        $entity = $this->_em->getReference('Doctrine\Tests\Models\ECommerce\ECommerceProduct' , $id);
+
+        $this->assertFalse($entity->__isInitialized__, "Pre-Condition: Object is unitialized proxy.");
+        $this->assertEquals($id, $entity->getId());
+        $this->assertFalse($entity->__isInitialized__, "Getting the identifier doesn't initialize the proxy.");
+    }
+
+    public function testDoNotInitializeProxyOnGettingTheIdentifierAndReturnTheRightType()
+    {
+        $product = new ECommerceProduct();
+        $product->setName('Doctrine Cookbook');
+
+        $shipping = new ECommerceShipping();
+        $shipping->setDays(1);
+        $product->setShipping($shipping);
+        $this->_em->persist($product);
+        $this->_em->flush();
+        $this->_em->clear();
+
+        $id = $shipping->getId();
+
+        $product = $this->_em->getRepository('Doctrine\Tests\Models\ECommerce\ECommerceProduct')->find($product->getId());
+
+        $entity = $product->getShipping();
+        $this->assertFalse($entity->__isInitialized__, "Pre-Condition: Object is unitialized proxy.");
+        $this->assertEquals($id, $entity->getId());
+        $this->assertSame($id, $entity->getId(), "Check that the id's are the same value, and type.");
+        $this->assertFalse($entity->__isInitialized__, "Getting the identifier doesn't initialize the proxy.");
+    }
+
+    public function testInitializeProxyOnGettingSomethingOtherThanTheIdentifier()
+    {
+        $id = $this->createProduct();
+
+        /* @var $entity Doctrine\Tests\Models\ECommerce\ECommerceProduct */
+        $entity = $this->_em->getReference('Doctrine\Tests\Models\ECommerce\ECommerceProduct' , $id);
+
+        $this->assertFalse($entity->__isInitialized__, "Pre-Condition: Object is unitialized proxy.");
+        $this->assertEquals('Doctrine Cookbook', $entity->getName());
+        $this->assertTrue($entity->__isInitialized__, "Getting something other than the identifier initializes the proxy.");
+    }
+
+    /**
+     * @group DDC-1604
+     */
+    public function testCommonPersistenceProxy()
+    {
+        $id = $this->createProduct();
+
+        /* @var $entity Doctrine\Tests\Models\ECommerce\ECommerceProduct */
+        $entity = $this->_em->getReference('Doctrine\Tests\Models\ECommerce\ECommerceProduct' , $id);
+        $className = \Doctrine\Common\Util\ClassUtils::getClass($entity);
+
+        $this->assertInstanceOf('Doctrine\Common\Persistence\Proxy', $entity);
+        $this->assertFalse($entity->__isInitialized());
+        $this->assertEquals('Doctrine\Tests\Models\ECommerce\ECommerceProduct', $className);
+
+        $restName = str_replace($this->_em->getConfiguration()->getProxyNamespace(), "", get_class($entity));
+        $restName = substr(get_class($entity), strlen($this->_em->getConfiguration()->getProxyNamespace()) +1);
+        $proxyFileName = $this->_em->getConfiguration()->getProxyDir() . DIRECTORY_SEPARATOR . str_replace("\\", "", $restName) . ".php";
+        $this->assertTrue(file_exists($proxyFileName), "Proxy file name cannot be found generically.");
+
+        $entity->__load();
+        $this->assertTrue($entity->__isInitialized());
+    }
 }

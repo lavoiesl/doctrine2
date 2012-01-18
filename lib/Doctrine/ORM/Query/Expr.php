@@ -42,9 +42,9 @@ class Expr
      *     // (u.type = ?1) AND (u.role = ?2)
      *     $expr->andX($expr->eq('u.type', ':1'), $expr->eq('u.role', ':2'));
      *
-     * @param Doctrine\ORM\Query\Expr\Comparison | 
-     *          Doctrine\ORM\Query\Expr\Func |
-     *          Doctrine\ORM\Query\Expr\Orx 
+     * @param \Doctrine\ORM\Query\Expr\Comparison |
+     *          \Doctrine\ORM\Query\Expr\Func |
+     *          \Doctrine\ORM\Query\Expr\Orx
     *               $x Optional clause. Defaults = null, but requires at least one defined when converting to string.
      * @return Expr\Andx
      */
@@ -75,7 +75,7 @@ class Expr
      * Creates an ASCending order expression.
      *
      * @param $sort
-     * @return OrderBy
+     * @return Expr\OrderBy
      */
     public function asc($expr)
     {
@@ -86,7 +86,7 @@ class Expr
      * Creates a DESCending order expression.
      *
      * @param $sort
-     * @return OrderBy
+     * @return Expr\OrderBy
      */
     public function desc($expr)
     {

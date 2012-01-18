@@ -18,7 +18,7 @@ class QueryCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
      * @var \ReflectionProperty
      */
     private $cacheDataReflection;
-    
+
     protected function setUp() {
         if (version_compare(\Doctrine\Common\Version::VERSION, '2.2.0-DEV', '>=')) {
             $this->markTestSkipped('Test not compatible with 2.2 common');
@@ -27,7 +27,7 @@ class QueryCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->useModelSet('cms');
         parent::setUp();
     }
-    
+
     /**
      * @param   ArrayCache $cache
      * @return  integer
@@ -36,7 +36,7 @@ class QueryCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
     {
         return sizeof($this->cacheDataReflection->getValue($cache));
     }
-    
+
 
     public function testQueryCache_DependsOnHints()
     {
@@ -106,7 +106,7 @@ class QueryCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
 
         $query = $this->_em->createQuery('select ux from Doctrine\Tests\Models\CMS\CmsUser ux');
 
-        $cache = $this->getMock('Doctrine\Common\Cache\AbstractCache', array('_doFetch', '_doContains', '_doSave', '_doDelete', 'getIds'));
+        $cache = $this->getMock('Doctrine\Common\Cache\ArrayCache', array('doFetch', 'doSave', 'doGetStats'));
         $cache->expects($this->at(0))
               ->method('doFetch')
               ->with($this->isType('string'))
@@ -136,7 +136,7 @@ class QueryCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
                          ->method('getSqlExecutor')
                          ->will($this->returnValue($sqlExecMock));
 
-        $cache = $this->getMock('Doctrine\Common\Cache\CacheProvider', 
+        $cache = $this->getMock('Doctrine\Common\Cache\CacheProvider',
                 array('doFetch', 'doContains', 'doSave', 'doDelete', 'doFlush', 'doGetStats'));
         $cache->expects($this->once())
               ->method('doFetch')

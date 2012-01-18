@@ -36,22 +36,22 @@ use PDO,
  */
 abstract class AbstractHydrator
 {
-    /** @var ResultSetMapping The ResultSetMapping. */
+    /** @var \Doctrine\ORM\Query\ResultSetMapping The ResultSetMapping. */
     protected $_rsm;
 
     /** @var EntityManager The EntityManager instance. */
     protected $_em;
 
-    /** @var AbstractPlatform The dbms Platform instance */
+    /** @var \Doctrine\DBAL\Platforms\AbstractPlatform The dbms Platform instance */
     protected $_platform;
 
-    /** @var UnitOfWork The UnitOfWork of the associated EntityManager. */
+    /** @var \Doctrine\ORM\UnitOfWork The UnitOfWork of the associated EntityManager. */
     protected $_uow;
 
     /** @var array The cache used during row-by-row hydration. */
     protected $_cache = array();
 
-    /** @var Statement The statement that provides the data to hydrate. */
+    /** @var \Doctrine\DBAL\Driver\Statement The statement that provides the data to hydrate. */
     protected $_stmt;
 
     /** @var array The query hints. */
@@ -60,7 +60,7 @@ abstract class AbstractHydrator
     /**
      * Initializes a new instance of a class derived from <tt>AbstractHydrator</tt>.
      *
-     * @param Doctrine\ORM\EntityManager $em The EntityManager to use.
+     * @param \Doctrine\ORM\EntityManager $em The EntityManager to use.
      */
     public function __construct(EntityManager $em)
     {
@@ -93,6 +93,7 @@ abstract class AbstractHydrator
      *
      * @param object $stmt
      * @param object $resultSetMapping
+     * @param array $hints
      * @return mixed
      */
     public function hydrateAll($stmt, $resultSetMapping, array $hints = array())
@@ -214,6 +215,7 @@ abstract class AbstractHydrator
 
                     case (isset($this->_rsm->scalarMappings[$key])):
                         $cache[$key]['fieldName'] = $this->_rsm->scalarMappings[$key];
+                        $cache[$key]['type']      = Type::getType($this->_rsm->typeMappings[$key]);
                         $cache[$key]['isScalar']  = true;
                         break;
 
@@ -236,6 +238,8 @@ abstract class AbstractHydrator
             }
 
             if (isset($cache[$key]['isScalar'])) {
+                $value = $cache[$key]['type']->convertToPHPValue($value, $this->_platform);
+                
                 $rowData['scalars'][$cache[$key]['fieldName']] = $value;
 
                 continue;
@@ -248,8 +252,11 @@ abstract class AbstractHydrator
             }
 
             if (isset($cache[$key]['isMetaColumn'])) {
-                if ( ! isset($rowData[$dqlAlias][$cache[$key]['fieldName']]) || $value !== null) {
+                if ( ! isset($rowData[$dqlAlias][$cache[$key]['fieldName']]) && $value !== null) {
                     $rowData[$dqlAlias][$cache[$key]['fieldName']] = $value;
+                    if ($cache[$key]['isIdentifier']) {
+                        $nonemptyComponents[$dqlAlias] = true;
+                    }
                 }
 
                 continue;
@@ -342,8 +349,17 @@ abstract class AbstractHydrator
 
         return $rowData;
     }
-    
-    protected function registerManaged($class, $entity, $data)
+
+    /**
+     * Register entity as managed in UnitOfWork.
+     *
+     * @param \Doctrine\ORM\Mapping\ClassMetadata $class
+     * @param object $entity
+     * @param array $data
+     *
+     * @todo The "$id" generation is the same of UnitOfWork#createEntity. Remove this duplication somehow
+     */
+    protected function registerManaged(ClassMetadata $class, $entity, array $data)
     {
         if ($class->isIdentifierComposite) {
             $id = array();

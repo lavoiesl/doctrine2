@@ -167,20 +167,21 @@ class QueryDqlFunctionTest extends \Doctrine\Tests\OrmFunctionalTestCase
     public function testFunctionSubstring()
     {
         $dql = "SELECT m, SUBSTRING(m.name, 1, 3) AS str1, SUBSTRING(m.name, 5) AS str2 ".
-                "FROM Doctrine\Tests\Models\Company\CompanyManager m";
+                "FROM Doctrine\Tests\Models\Company\CompanyManager m ORDER BY m.name";
 
         $result = $this->_em->createQuery($dql)
                          ->getArrayResult();
 
         $this->assertEquals(4, count($result));
-        $this->assertEquals('Rom', $result[0]['str1']);
-        $this->assertEquals('Ben', $result[1]['str1']);
-        $this->assertEquals('Gui', $result[2]['str1']);
-        $this->assertEquals('Jon', $result[3]['str1']);
-        $this->assertEquals('n B.', $result[0]['str2']);
-        $this->assertEquals('amin E.', $result[1]['str2']);
-        $this->assertEquals('herme B.', $result[2]['str2']);
-        $this->assertEquals('than W.', $result[3]['str2']);
+        $this->assertEquals('Ben', $result[0]['str1']);
+        $this->assertEquals('Gui', $result[1]['str1']);
+        $this->assertEquals('Jon', $result[2]['str1']);
+        $this->assertEquals('Rom', $result[3]['str1']);
+        
+        $this->assertEquals('amin E.', $result[0]['str2']);
+        $this->assertEquals('herme B.', $result[1]['str2']);
+        $this->assertEquals('than W.', $result[2]['str2']);
+        $this->assertEquals('n B.', $result[3]['str2']);
     }
 
     public function testFunctionTrim()
@@ -210,7 +211,7 @@ class QueryDqlFunctionTest extends \Doctrine\Tests\OrmFunctionalTestCase
     {
         $result = $this->_em->createQuery('SELECT m, m.salary+2500 AS add FROM Doctrine\Tests\Models\Company\CompanyManager m')
                 ->getResult();
-        
+
         $this->assertEquals(4, count($result));
         $this->assertEquals(102500, $result[0]['add']);
         $this->assertEquals(202500, $result[1]['add']);
@@ -256,7 +257,7 @@ class QueryDqlFunctionTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->assertEquals(800000, $result[2]['op']);
         $this->assertEquals(1600000, $result[3]['op']);
     }
-    
+
     public function testConcatFunction()
     {
         $arg = $this->_em->createQuery('SELECT CONCAT(m.name, m.department) AS namedep FROM Doctrine\Tests\Models\Company\CompanyManager m order by namedep desc')
@@ -276,12 +277,12 @@ class QueryDqlFunctionTest extends \Doctrine\Tests\OrmFunctionalTestCase
     {
         $query = $this->_em->createQuery("SELECT DATE_DIFF(CURRENT_TIMESTAMP(), DATE_ADD(CURRENT_TIMESTAMP(), 10, 'day')) AS diff FROM Doctrine\Tests\Models\Company\CompanyManager m");
         $arg = $query->getArrayResult();
-        
+
         $this->assertEquals(-10, $arg[0]['diff'], "Should be roughly -10 (or -9)", 1);
-        
+
         $query = $this->_em->createQuery("SELECT DATE_DIFF(DATE_ADD(CURRENT_TIMESTAMP(), 10, 'day'), CURRENT_TIMESTAMP()) AS diff FROM Doctrine\Tests\Models\Company\CompanyManager m");
         $arg = $query->getArrayResult();
-        
+
         $this->assertEquals(10, $arg[0]['diff'], "Should be roughly 10 (or 9)", 1);
     }
 
@@ -315,6 +316,54 @@ class QueryDqlFunctionTest extends \Doctrine\Tests\OrmFunctionalTestCase
                 ->getArrayResult();
 
         $this->assertTrue(strtotime($arg[0]['add']) > 0);
+    }
+
+    /**
+     * @group DDC-1213
+     */
+    public function testBitOrComparison()
+    {
+        $dql    = 'SELECT m, ' .
+                    'BIT_OR(4, 2) AS bit_or,' .
+                    'BIT_OR( (m.salary/100000) , 2 ) AS salary_bit_or ' .
+                    'FROM Doctrine\Tests\Models\Company\CompanyManager m ' .
+                'ORDER BY ' .
+                    'm.id ' ;
+        $result = $this->_em->createQuery($dql)->getArrayResult();
+
+        $this->assertEquals(4 | 2, $result[0]['bit_or']);
+        $this->assertEquals(4 | 2, $result[1]['bit_or']);
+        $this->assertEquals(4 | 2, $result[2]['bit_or']);
+        $this->assertEquals(4 | 2, $result[3]['bit_or']);
+
+        $this->assertEquals(($result[0][0]['salary']/100000) | 2, $result[0]['salary_bit_or']);
+        $this->assertEquals(($result[1][0]['salary']/100000) | 2, $result[1]['salary_bit_or']);
+        $this->assertEquals(($result[2][0]['salary']/100000) | 2, $result[2]['salary_bit_or']);
+        $this->assertEquals(($result[3][0]['salary']/100000) | 2, $result[3]['salary_bit_or']);
+    }
+
+    /**
+    * @group DDC-1213
+    */
+    public function testBitAndComparison()
+    {
+        $dql    = 'SELECT m, ' .
+                    'BIT_AND(4, 2) AS bit_and,' .
+                    'BIT_AND( (m.salary/100000) , 2 ) AS salary_bit_and ' .
+                    'FROM Doctrine\Tests\Models\Company\CompanyManager m ' .
+                'ORDER BY ' .
+                    'm.id ' ;
+        $result = $this->_em->createQuery($dql)->getArrayResult();
+
+        $this->assertEquals(4 & 2, $result[0]['bit_and']);
+        $this->assertEquals(4 & 2, $result[1]['bit_and']);
+        $this->assertEquals(4 & 2, $result[2]['bit_and']);
+        $this->assertEquals(4 & 2, $result[3]['bit_and']);
+
+        $this->assertEquals(($result[0][0]['salary']/100000) & 2, $result[0]['salary_bit_and']);
+        $this->assertEquals(($result[1][0]['salary']/100000) & 2, $result[1]['salary_bit_and']);
+        $this->assertEquals(($result[2][0]['salary']/100000) & 2, $result[2]['salary_bit_and']);
+        $this->assertEquals(($result[3][0]['salary']/100000) & 2, $result[3]['salary_bit_and']);
     }
 
     protected function generateFixture()

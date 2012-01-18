@@ -36,7 +36,8 @@ class DDC214Test extends \Doctrine\Tests\OrmFunctionalTestCase
             'Doctrine\Tests\Models\CMS\CmsPhonenumber',
             'Doctrine\Tests\Models\CMS\CmsAddress',
             'Doctrine\Tests\Models\CMS\CmsGroup',
-            'Doctrine\Tests\Models\CMS\CmsArticle'
+            'Doctrine\Tests\Models\CMS\CmsArticle',
+            'Doctrine\Tests\Models\CMS\CmsEmail',
         );
 
         $this->assertCreatedSchemaNeedsNoUpdates($this->classes);
@@ -84,7 +85,7 @@ class DDC214Test extends \Doctrine\Tests\OrmFunctionalTestCase
 
         $sql = $schemaDiff->toSql($this->_em->getConnection()->getDatabasePlatform());
         $sql = array_filter($sql, function($sql) { return strpos($sql, 'DROP') === false; });
-        
+
         $this->assertEquals(0, count($sql), "SQL: " . implode(PHP_EOL, $sql));
     }
 }
