@@ -94,7 +94,7 @@ class NativeQueryTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->assertEquals($addr->street, $addresses[0]->street);
         $this->assertTrue($addresses[0]->user instanceof CmsUser);
     }
-
+    
     public function testJoinedOneToManyNativeQuery()
     {
         $user = new CmsUser;

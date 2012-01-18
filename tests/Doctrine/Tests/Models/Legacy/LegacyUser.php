@@ -21,7 +21,7 @@ class LegacyUser
      */
     public $_username;
     /**
-     * @Column(type="string", length=255, name="name")
+     * @Column(type="string", length=255)
      */
     public $_name;
     /**

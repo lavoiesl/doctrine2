@@ -792,13 +792,6 @@ class ClassMetadataInfo implements ClassMetadata
             $mapping['targetEntity'] = ltrim($mapping['targetEntity'], '\\');
         }
 
-        if ( ($mapping['type'] & (self::MANY_TO_ONE|self::MANY_TO_MANY)) > 0 &&
-                isset($mapping['orphanRemoval']) &&
-                $mapping['orphanRemoval'] == true) {
-
-            throw MappingException::illegalOrphanRemoval($this->name, $mapping['fieldName']);
-        }
-
         // Complete id mapping
         if (isset($mapping['id']) && $mapping['id'] === true) {
             if (isset($mapping['orphanRemoval']) && $mapping['orphanRemoval'] == true) {
@@ -1651,33 +1644,22 @@ class ClassMetadataInfo implements ClassMetadata
     public function setDiscriminatorMap(array $map)
     {
         foreach ($map as $value => $className) {
-            $this->addDiscriminatorMapClass($value, $className);
-        }
-    }
-
-    /**
-     * Add one entry of the discriminator map with a new class and corresponding name.
-     *
-     * @param string $name
-     * @param string $className
-     */
-    public function addDiscriminatorMapClass($name, $className)
-    {
-        if (strlen($this->namespace) > 0 && strpos($className, '\\') === false) {
-            $className = $this->namespace . '\\' . $className;
-        }
-
-        $className = ltrim($className, '\\');
-        $this->discriminatorMap[$name] = $className;
-
-        if ($this->name == $className) {
-            $this->discriminatorValue = $name;
-        } else {
-            if ( ! class_exists($className)) {
-                throw MappingException::invalidClassInDiscriminatorMap($className, $this->name);
+            if (strlen($this->namespace) > 0 && strpos($className, '\\') === false) {
+                $className = $this->namespace . '\\' . $className;
             }
-            if (is_subclass_of($className, $this->name)) {
-                $this->subClasses[] = $className;
+
+            $className = ltrim($className, '\\');
+            $this->discriminatorMap[$value] = $className;
+
+            if ($this->name == $className) {
+                $this->discriminatorValue = $value;
+            } else {
+                if ( ! class_exists($className)) {
+                    throw MappingException::invalidClassInDiscriminatorMap($className, $this->name);
+                }
+                if (is_subclass_of($className, $this->name)) {
+                    $this->subClasses[] = $className;
+                }
             }
         }
     }
@@ -2016,6 +1998,16 @@ class ClassMetadataInfo implements ClassMetadata
      * @param string $fieldName
      * @return string
      */
+    public function getAssociationMappedByTargetField($fieldName)
+    {
+        return $this->associationMappings[$fieldName]['mappedBy'];
+    }
+
+    public function isAssociationInverseSide($fieldName)
+    {
+        return isset($this->associationMappings[$fieldName]) && !$this->associationMappings[$fieldName]['isOwningSide'];
+    }
+
     public function getAssociationMappedByTargetField($fieldName)
     {
         return $this->associationMappings[$fieldName]['mappedBy'];

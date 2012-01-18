@@ -86,34 +86,24 @@ class ObjectHydrator extends AbstractHydrator
                 continue;
             }
 
-            if ( ! isset($this->_rsm->aliasMap[$this->_rsm->parentAliasMap[$dqlAlias]])) {
-                throw HydrationException::parentObjectOfRelationNotFound($dqlAlias, $this->_rsm->parentAliasMap[$dqlAlias]);
-            }
+                $sourceClassName = $this->_rsm->aliasMap[$this->_rsm->parentAliasMap[$dqlAlias]];
+                $sourceClass = $this->_getClassMetadata($sourceClassName);
+                $assoc = $sourceClass->associationMappings[$this->_rsm->relationMap[$dqlAlias]];
 
-            $sourceClassName = $this->_rsm->aliasMap[$this->_rsm->parentAliasMap[$dqlAlias]];
-            $sourceClass     = $this->_getClassMetadata($sourceClassName);
-            $assoc           = $sourceClass->associationMappings[$this->_rsm->relationMap[$dqlAlias]];
+                $this->_hints['fetched'][$this->_rsm->parentAliasMap[$dqlAlias]][$assoc['fieldName']] = true;
 
-            $this->_hints['fetched'][$this->_rsm->parentAliasMap[$dqlAlias]][$assoc['fieldName']] = true;
-
-            if ($assoc['type'] === ClassMetadata::MANY_TO_MANY) {
-                continue;
-            }
-
-            // Mark any non-collection opposite sides as fetched, too.
-            if ($assoc['mappedBy']) {
-                $this->_hints['fetched'][$dqlAlias][$assoc['mappedBy']] = true;
-
-                continue;
-            }
-
-            // handle fetch-joined owning side bi-directional one-to-one associations
-            if ($assoc['inversedBy']) {
-                $class        = $this->_ce[$className];
-                $inverseAssoc = $class->associationMappings[$assoc['inversedBy']];
-
-                if ( ! ($inverseAssoc['type'] & ClassMetadata::TO_ONE)) {
-                    continue;
+                if ($assoc['type'] != ClassMetadata::MANY_TO_MANY) {
+                    // Mark any non-collection opposite sides as fetched, too.
+                    if ($assoc['mappedBy']) {
+                        $this->_hints['fetched'][$dqlAlias][$assoc['mappedBy']] = true;
+                    } else {
+                        if ($assoc['inversedBy']) {
+                            $inverseAssoc = $class->associationMappings[$assoc['inversedBy']];
+                            if ($inverseAssoc['type'] & ClassMetadata::TO_ONE) {
+                                $this->_hints['fetched'][$dqlAlias][$inverseAssoc['fieldName']] = true;
+                            }
+                        }
+                    }
                 }
 
                 $this->_hints['fetched'][$dqlAlias][$inverseAssoc['fieldName']] = true;
@@ -128,8 +118,7 @@ class ObjectHydrator extends AbstractHydrator
     {
         $eagerLoad = (isset($this->_hints['deferEagerLoad'])) && $this->_hints['deferEagerLoad'] == true;
 
-        parent::cleanup();
-
+        parent::_cleanup();
         $this->_identifierMap =
         $this->_initializedCollections =
         $this->_existingCollections =
@@ -188,11 +177,9 @@ class ObjectHydrator extends AbstractHydrator
             $this->_uow->setOriginalEntityProperty($oid, $fieldName, $value);
 
             $this->_initializedCollections[$oid . $fieldName] = $value;
-        } else if (
-            isset($this->_hints[Query::HINT_REFRESH]) ||
-            isset($this->_hints['fetched'][$parentDqlAlias][$fieldName]) &&
-             ! $value->isInitialized()
-        ) {
+        } else if (isset($this->_hints[Query::HINT_REFRESH]) ||
+                isset($this->_hints['fetched'][$parentDqlAlias][$fieldName]) &&
+                ! $value->isInitialized()) {
             // Is already PersistentCollection, but either REFRESH or FETCH-JOIN and UNINITIALIZED!
             $value->setDirty(false);
             $value->setInitialized(true);
@@ -231,7 +218,8 @@ class ObjectHydrator extends AbstractHydrator
         }
 
         if (isset($this->_hints[Query::HINT_REFRESH_ENTITY]) && isset($this->_rootAliases[$dqlAlias])) {
-            $this->registerManaged($this->_ce[$className], $this->_hints[Query::HINT_REFRESH_ENTITY], $data);
+            $class = $this->_ce[$className];
+            $this->registerManaged($class, $this->_hints[Query::HINT_REFRESH_ENTITY], $data);
         }
 
         $this->_hints['fetchAlias'] = $dqlAlias;
@@ -242,7 +230,6 @@ class ObjectHydrator extends AbstractHydrator
     {
         // TODO: Abstract this code and UnitOfWork::createEntity() equivalent?
         $class = $this->_ce[$className];
-
         /* @var $class ClassMetadata */
         if ($class->isIdentifierComposite) {
             $idHash = '';
@@ -443,11 +430,10 @@ class ObjectHydrator extends AbstractHydrator
                 // if this row has a NULL value for the root result id then make it a null result.
                 if ( ! isset($nonemptyComponents[$dqlAlias]) ) {
                     if ($this->_rsm->isMixed) {
-                        $result[] = array($entityKey => null);
+                        $result[] = array(0 => null);
                     } else {
                         $result[] = null;
                     }
-                    $resultKey = $this->_resultCounter;
                     ++$this->_resultCounter;
                     continue;
                 }

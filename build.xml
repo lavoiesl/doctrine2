@@ -223,12 +223,7 @@
 
     <target name="distribute-download">
         <copy file="dist/DoctrineORM-${version}-full.tar.gz" todir="${project.download_dir}" />
-        <!--<copy file="${dist.dir}/doctrine-orm-${version}.phar" todir="${project.download_dir}" />-->
-    </target>
-
-    <target name="distribute-xsd">
-        <php expression="substr('${version}', 0, 3)" returnProperty="minorVersion" /><!-- not too robust -->
-        <copy file="${project.basedir}/doctrine-mapping.xsd" tofile="${project.xsd_dir}/doctrine-mapping-${minorVersion}.xsd" />
+        <copy file="${dist.dir}/doctrine-orm-${version}.phar" todir="${project.download_dir}" />
     </target>
 
     <target name="update-dev-version">
@@ -240,7 +235,7 @@
         <exec command="git commit -m 'Bump Dev Version to ${next_version}-DEV'" passthru="true" />
     </target>
 
-    <target name="release" depends="git-tag,build-packages,distribute-download,pirum-release,update-dev-version,distribute-xsd" />
+    <target name="release" depends="git-tag,build-packages,package-phar,distribute-download,pirum-release,update-dev-version" />
     
     <!--
         Builds distributable PEAR packages for the Symfony Dependencies

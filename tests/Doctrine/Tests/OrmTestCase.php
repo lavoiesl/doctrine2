@@ -3,6 +3,8 @@
 namespace Doctrine\Tests;
 
 use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Annotations\AnnotationRegistry;
+use Doctrine\Common\Annotations\SimpleAnnotationReader;
 
 /**
  * Base testcase class for all ORM testcases.
@@ -21,18 +23,14 @@ abstract class OrmTestCase extends DoctrineTestCase
      */
     protected function createAnnotationDriver($paths = array(), $alias = null)
     {
-        if (version_compare(\Doctrine\Common\Version::VERSION, '3.0.0', '>=')) {
-            $reader = new \Doctrine\Common\Annotations\CachedReader(
-                new \Doctrine\Common\Annotations\AnnotationReader(), new ArrayCache()
-            );
-        }
-        else if (version_compare(\Doctrine\Common\Version::VERSION, '2.2.0-DEV', '>=')) {
+        if (version_compare(\Doctrine\Common\Version::VERSION, '2.2.0-DEV', '>=')) {
             // Register the ORM Annotations in the AnnotationRegistry
-            $reader = new \Doctrine\Common\Annotations\SimpleAnnotationReader();
+            AnnotationRegistry::registerFile(__DIR__ . '/../../../lib/Doctrine/ORM//Mapping/Driver/DoctrineAnnotations.php');
+
+            $reader = new SimpleAnnotationReader();
             $reader->addNamespace('Doctrine\ORM\Mapping');
             $reader = new \Doctrine\Common\Annotations\CachedReader($reader, new ArrayCache());
-        }
-        else if (version_compare(\Doctrine\Common\Version::VERSION, '2.1.0-BETA3-DEV', '>=')) {
+        } else if (version_compare(\Doctrine\Common\Version::VERSION, '2.1.0-BETA3-DEV', '>=')) {
             $reader = new \Doctrine\Common\Annotations\AnnotationReader();
             $reader->setIgnoreNotImportedAnnotations(true);
             $reader->setEnableParsePhpImports(false);
@@ -56,10 +54,10 @@ abstract class OrmTestCase extends DoctrineTestCase
             __DIR__ . "/../../../lib/Doctrine/ORM/Mapping/Driver/DoctrineAnnotations.php");
         return new \Doctrine\ORM\Mapping\Driver\AnnotationDriver($reader, (array)$paths);
     }
-    
+
     /**
      * Creates an EntityManager for testing purposes.
-     * 
+     *
      * NOTE: The created EntityManager will have its dependant DBAL parts completely
      * mocked out using a DriverMock, ConnectionMock, etc. These mocks can then
      * be configured in the tests to simulate the DBAL behavior that is desired
@@ -105,7 +103,7 @@ abstract class OrmTestCase extends DoctrineTestCase
         
         return self::$_metadataCacheImpl;
     }
-    
+
     private static function getSharedQueryCacheImpl()
     {
         if (self::$_queryCacheImpl === null) {

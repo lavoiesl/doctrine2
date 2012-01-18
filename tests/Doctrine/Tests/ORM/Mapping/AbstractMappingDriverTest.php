@@ -507,7 +507,7 @@ class User
            ),
            'mappedBy' => 'user',
            'orphanRemoval' => true,
-           'orderBy' =>
+           'orderBy' => 
            array(
            'number' => 'ASC',
            ),
