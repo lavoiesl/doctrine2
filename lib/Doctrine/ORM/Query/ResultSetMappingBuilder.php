@@ -105,17 +105,5 @@ class ResultSetMappingBuilder extends ResultSetMapping
                 }
             }
         }
-        foreach ($classMetadata->associationMappings AS $associationMapping) {
-            if ($associationMapping['isOwningSide'] && $associationMapping['type'] & ClassMetadataInfo::TO_ONE) {
-                foreach ($associationMapping['joinColumns'] AS $joinColumn) {
-                    $columnName = $joinColumn['name'];
-                    $renamedColumnName = isset($renamedColumns[$columnName]) ? $renamedColumns[$columnName] : $columnName;
-                    if (isset($this->metaMappings[$renamedColumnName])) {
-                        throw new \InvalidArgumentException("The column '$renamedColumnName' conflicts with another column in the mapper.");
-                    }
-                    $this->addMetaResult($alias, $platform->getSQLResultCasing($renamedColumnName), $platform->getSQLResultCasing($columnName));
-                }
-            }
-        }
     }
 }

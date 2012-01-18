@@ -20,10 +20,8 @@ class QueryCacheTest extends \Doctrine\Tests\OrmFunctionalTestCase
     private $cacheDataReflection;
 
     protected function setUp() {
-        if (version_compare(\Doctrine\Common\Version::VERSION, '2.2.0-DEV', '>=')) {
-            $this->markTestSkipped('Test not compatible with 2.2 common');
-        }
-
+        $this->cacheDataReflection = new \ReflectionProperty("Doctrine\Common\Cache\ArrayCache", "data");
+        $this->cacheDataReflection->setAccessible(true);
         $this->useModelSet('cms');
         parent::setUp();
     }

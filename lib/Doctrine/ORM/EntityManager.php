@@ -751,11 +751,15 @@ class EntityManager implements ObjectManager
     }
 
     /**
-     * {@inheritDoc}
+     * Helper method to initialize a lazy loading proxy or persistent collection.
+     *
+     * This method is a no-op for other objects
+     *
+     * @param object $obj
      */
-    public function initializeObject($entity)
+    public function initializeObject($obj)
     {
-        $this->unitOfWork->initializeObject($entity);
+        $this->unitOfWork->initializeObject($obj);
     }
 
     /**

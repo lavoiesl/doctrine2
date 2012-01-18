@@ -186,11 +186,6 @@ abstract class AbstractHydrator
      * @param array &$id Dql-Alias => ID-Hash
      * @param array &$nonemptyComponents Does this DQL-Alias has at least one non NULL value?
      *
-     * @param array $data SQL Result Row
-     * @param array &$cache Cache for column to field result information
-     * @param array &$id Dql-Alias => ID-Hash
-     * @param array &$nonemptyComponents Does this DQL-Alias has at least one non NULL value?
-     *
      * @return array  An array with all the fields (name => value) of the data row,
      *                grouped by their component alias.
      */
@@ -377,6 +372,7 @@ abstract class AbstractHydrator
                 $id = array($class->identifier[0] => $data[$class->identifier[0]]);
             }
         }
+
         $this->_em->getUnitOfWork()->registerManaged($entity, $id, $data);
     }
 }

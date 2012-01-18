@@ -230,7 +230,7 @@ class BasicEntityPersister
 
             if (isset($insertData[$tableName])) {
                 $paramIndex = 1;
-                
+
                 foreach ($insertData[$tableName] as $column => $value) {
                     $stmt->bindValue($paramIndex++, $value, $this->_columnTypes[$column]);
                 }
@@ -659,13 +659,7 @@ class BasicEntityPersister
 
             // TRICKY: since the association is specular source and target are flipped
             foreach ($owningAssoc['targetToSourceKeyColumns'] as $sourceKeyColumn => $targetKeyColumn) {
-                if (isset($sourceClass->fieldNames[$sourceKeyColumn])) {
-                    // unset the old value and set the new sql aliased value here. By definition
-                    // unset($identifier[$targetKeyColumn] works here with how UnitOfWork::createEntity() calls this method.
-                    $identifier[$this->_getSQLTableAlias($targetClass->name) . "." . $targetKeyColumn] =
-                        $sourceClass->reflFields[$sourceClass->fieldNames[$sourceKeyColumn]]->getValue($sourceEntity);
-                    unset($identifier[$targetKeyColumn]);
-                } else {
+                if ( ! isset($sourceClass->fieldNames[$sourceKeyColumn])) {
                     throw MappingException::joinColumnMustPointToMappedField(
                         $sourceClass->name, $sourceKeyColumn
                     );
@@ -1028,7 +1022,8 @@ class BasicEntityPersister
                 $first = true;
 
                 if ($assoc['isOwningSide']) {
-                    $this->_selectJoinSql .= ' ' . $eagerEntity->table['name'] . ' ' . $this->_getSQLTableAlias($eagerEntity->name, $assocAlias) .' ON ';
+                    $this->_selectJoinSql .= ' ' . $this->getJoinSQLForJoinColumns($assoc['joinColumns']);
+                    $this->_selectJoinSql .= ' ' . $eagerEntity->getQuotedTableName($this->_platform) . ' ' . $this->_getSQLTableAlias($eagerEntity->name, $assocAlias) .' ON ';
 
                     $tableAlias = $this->_getSQLTableAlias($assoc['targetEntity'], $assocAlias);
                     foreach ($assoc['sourceToTargetKeyColumns'] AS $sourceCol => $targetCol) {
@@ -1048,7 +1043,9 @@ class BasicEntityPersister
                     $eagerEntity = $this->_em->getClassMetadata($assoc['targetEntity']);
                     $owningAssoc = $eagerEntity->getAssociationMapping($assoc['mappedBy']);
 
-                    $this->_selectJoinSql .= ' ' . $eagerEntity->table['name'] . ' ' . $this->_getSQLTableAlias($eagerEntity->name, $assocAlias) .' ON ';
+                    $this->_selectJoinSql .= ' LEFT JOIN';
+                    $this->_selectJoinSql .= ' ' . $eagerEntity->getQuotedTableName($this->_platform) . ' '
+                                           . $this->_getSQLTableAlias($eagerEntity->name, $assocAlias) . ' ON ';
 
                     foreach ($owningAssoc['sourceToTargetKeyColumns'] AS $sourceCol => $targetCol) {
                         if ( ! $first) {
@@ -1068,6 +1065,16 @@ class BasicEntityPersister
         return $this->_selectColumnListSql;
     }
 
+    /**
+     * Gets the SQL join fragment used when selecting entities from an association.
+     *
+     * @param string $field
+     * @param array $assoc
+     * @param ClassMetadata $class
+     * @param string $alias
+     *
+     * @return string
+     */
     protected function _getSelectColumnAssociationSQL($field, $assoc, ClassMetadata $class, $alias = 'r')
     {
         $columnList = '';
@@ -1076,8 +1083,7 @@ class BasicEntityPersister
             foreach ($assoc['targetToSourceKeyColumns'] as $srcColumn) {
                 if ($columnList) $columnList .= ', ';
 
-                $columnAlias = $srcColumn . $this->_sqlAliasCounter++;
-                $resultColumnName = $this->_platform->getSQLResultCasing($columnAlias);
+                $resultColumnName = $this->getSQLColumnAlias($srcColumn);
                 $columnList .= $this->_getSQLTableAlias($class->name, ($alias == 'r' ? '' : $alias) )
                              . '.' . $srcColumn . ' AS ' . $resultColumnName;
                 $this->_rsm->addMetaResult($alias, $resultColumnName, $srcColumn, isset($assoc['id']) && $assoc['id'] === true);
@@ -1105,7 +1111,6 @@ class BasicEntityPersister
         }
 
         $joinTableName = $this->_class->getQuotedJoinTableName($owningAssoc, $this->_platform);
-
         $joinSql = '';
 
         foreach ($joinClauses as $joinTableColumn => $sourceColumn) {
@@ -1513,8 +1518,7 @@ class BasicEntityPersister
                 $idValues = $class->getIdentifierValues($value);
             }
 
-            $params[] = $value;
-            $types[] = $type;
+            $value = $idValues[key($idValues)];
         }
 
         return $value;

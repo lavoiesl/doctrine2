@@ -327,10 +327,6 @@ class ClassMetadataFactory implements ClassMetadataFactoryInterface
                 $this->addInheritedNamedQueries($class, $parent);
             }
 
-            if ($parent && $parent->containsForeignIdentifier) {
-                $class->containsForeignIdentifier = true;
-            }
-
             $class->setParentClasses($visited);
 
             if ($this->evm->hasListeners(Events::loadClassMetadata)) {
@@ -528,7 +524,10 @@ class ClassMetadataFactory implements ClassMetadataFactoryInterface
     }
 
     /**
-     * {@inheritDoc}
+     * Check if this class is mapped by this EntityManager + ClassMetadata configuration
+     *
+     * @param $class
+     * @return bool
      */
     public function isTransient($class)
     {

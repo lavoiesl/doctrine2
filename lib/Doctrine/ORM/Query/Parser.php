@@ -2471,7 +2471,7 @@ class Parser
     /**
      * ArithmeticPrimary ::= SingleValuedPathExpression | Literal | "(" SimpleArithmeticExpression ")"
      *          | FunctionsReturningNumerics | AggregateExpression | FunctionsReturningStrings
-     *          | FunctionsReturningDatetime | IdentificationVariable | ResultVariable 
+     *          | FunctionsReturningDatetime | IdentificationVariable | ResultVariable | CaseExpression
      */
     public function ArithmeticPrimary()
     {
@@ -2500,11 +2500,11 @@ class Parser
                 if ($peek['value'] == '.') {
                     return $this->SingleValuedPathExpression();
                 }
-                
+
                 if (isset($this->_queryComponents[$this->_lexer->lookahead['value']]['resultVariable'])) {
                     return $this->ResultVariable();
                 }
-                
+
                 return $this->StateFieldPathExpression();
 
             case Lexer::T_INPUT_PARAMETER:

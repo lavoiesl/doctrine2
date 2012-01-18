@@ -3,8 +3,6 @@
 namespace Doctrine\Tests;
 
 use Doctrine\Common\Cache\ArrayCache;
-use Doctrine\Common\Annotations\AnnotationRegistry;
-use Doctrine\Common\Annotations\SimpleAnnotationReader;
 
 /**
  * Base testcase class for all ORM testcases.
@@ -23,14 +21,18 @@ abstract class OrmTestCase extends DoctrineTestCase
      */
     protected function createAnnotationDriver($paths = array(), $alias = null)
     {
-        if (version_compare(\Doctrine\Common\Version::VERSION, '2.2.0-DEV', '>=')) {
+        if (version_compare(\Doctrine\Common\Version::VERSION, '3.0.0', '>=')) {
+            $reader = new \Doctrine\Common\Annotations\CachedReader(
+                new \Doctrine\Common\Annotations\AnnotationReader(), new ArrayCache()
+            );
+        }
+        else if (version_compare(\Doctrine\Common\Version::VERSION, '2.2.0-DEV', '>=')) {
             // Register the ORM Annotations in the AnnotationRegistry
-            AnnotationRegistry::registerFile(__DIR__ . '/../../../lib/Doctrine/ORM//Mapping/Driver/DoctrineAnnotations.php');
-
-            $reader = new SimpleAnnotationReader();
+            $reader = new \Doctrine\Common\Annotations\SimpleAnnotationReader();
             $reader->addNamespace('Doctrine\ORM\Mapping');
             $reader = new \Doctrine\Common\Annotations\CachedReader($reader, new ArrayCache());
-        } else if (version_compare(\Doctrine\Common\Version::VERSION, '2.1.0-BETA3-DEV', '>=')) {
+        }
+        else if (version_compare(\Doctrine\Common\Version::VERSION, '2.1.0-BETA3-DEV', '>=')) {
             $reader = new \Doctrine\Common\Annotations\AnnotationReader();
             $reader->setIgnoreNotImportedAnnotations(true);
             $reader->setEnableParsePhpImports(false);
